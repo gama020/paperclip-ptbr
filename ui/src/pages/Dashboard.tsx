@@ -233,15 +233,22 @@ export function Dashboard() {
                 <PauseCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
                 <div>
                   <p className="text-sm font-medium text-red-50">
-                    {data.budgets.activeIncidents} active budget incident{data.budgets.activeIncidents === 1 ? "" : "s"}
+                    {data.budgets.activeIncidents}{" "}
+                    {data.budgets.activeIncidents === 1
+                      ? t("dashboard.active_budget_incident_one")
+                      : t("dashboard.active_budget_incident_other")}
                   </p>
                   <p className="text-xs text-red-100/70">
-                    {data.budgets.pausedAgents} agents paused · {data.budgets.pausedProjects} projects paused · {data.budgets.pendingApprovals} pending budget approvals
+                    {t("dashboard.budget_summary", {
+                      pausedAgents: data.budgets.pausedAgents,
+                      pausedProjects: data.budgets.pausedProjects,
+                      pendingApprovals: data.budgets.pendingApprovals,
+                    })}
                   </p>
                 </div>
               </div>
               <Link to="/costs" className="text-sm underline underline-offset-2 text-red-100">
-                Open budgets
+                {t("dashboard.open_budgets")}
               </Link>
             </div>
           ) : null}

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,6 +107,7 @@ function LabSection({
   accentClassName?: string;
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <section
       className={cn(
@@ -138,6 +140,7 @@ function StatusCard({
   body: string;
   tone?: "default" | "warn" | "success" | "error";
 }) {
+  const { t } = useTranslation();
   const toneClassName = {
     default: "border-border/70 bg-background/85",
     warn: "border-amber-400/40 bg-amber-500/[0.08]",
@@ -190,6 +193,7 @@ function InviteSummaryPanel({
   requestedAccess: string;
   signedInLabel?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       <div className="flex items-start gap-4">
@@ -200,29 +204,29 @@ function InviteSummaryPanel({
           className="h-16 w-16 rounded-none border border-zinc-800"
         />
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">You&apos;ve been invited to join Paperclip</p>
+          <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">{t("inviteUxLab.summary_invited_to_join")}</p>
           <h3 className="mt-2 text-2xl font-semibold text-zinc-100">{title}</h3>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-300">{description}</p>
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <MetaCard label="Company" value="Acme Robotics" />
-        <MetaCard label="Invited by" value="Board User" />
-        <MetaCard label="Requested access" value={requestedAccess} />
-        <MetaCard label="Invite expires" value="Mar 7, 2027" />
+        <MetaCard label={t("inviteUxLab.meta_company")} value="Acme Robotics" />
+        <MetaCard label={t("inviteUxLab.meta_invited_by")} value="Board User" />
+        <MetaCard label={t("inviteUxLab.meta_requested_access")} value={requestedAccess} />
+        <MetaCard label={t("inviteUxLab.meta_invite_expires")} value="Mar 7, 2027" />
       </div>
 
       {inviteMessage ? (
         <div className="border border-amber-500/40 bg-amber-500/10 p-4">
-          <div className="text-xs uppercase tracking-[0.2em] text-amber-200/80">Message from inviter</div>
+          <div className="text-xs uppercase tracking-[0.2em] text-amber-200/80">{t("inviteUxLab.meta_message_from_inviter")}</div>
           <p className="mt-2 text-sm leading-6 text-amber-50">{inviteMessage}</p>
         </div>
       ) : null}
 
       {signedInLabel ? (
         <div className="border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-50">
-          Signed in as <span className="font-medium">{signedInLabel}</span>.
+          {t("inviteUxLab.meta_signed_in_as", { signedInLabel })}
         </div>
       ) : null}
     </>
@@ -247,16 +251,17 @@ function InlineAuthPreview({
   feedback?: { tone: "info" | "error"; text: string };
   working?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-5">
       <div>
         <h3 className="text-lg font-semibold text-zinc-100">
-          {mode === "sign_up" ? "Create your account" : "Sign in to continue"}
+          {mode === "sign_up" ? t("inviteUxLab.inline_sign_up_heading") : t("inviteUxLab.inline_sign_in_heading")}
         </h3>
         <p className="mt-1 text-sm text-zinc-400">
           {mode === "sign_up"
-            ? "Start with a Paperclip account. After that, you'll come right back here to accept the invite for Acme Robotics."
-            : "Use the Paperclip account that already matches this invite. If you do not have one yet, switch back to create account."}
+            ? t("inviteUxLab.inline_sign_up_description")
+            : t("inviteUxLab.inline_sign_in_description")}
         </p>
       </div>
 
@@ -270,7 +275,7 @@ function InlineAuthPreview({
               : "border-zinc-800 text-zinc-300 hover:border-zinc-600",
           )}
         >
-          Create account
+          {t("inviteUxLab.btn_create_account")}
         </button>
         <button
           type="button"
@@ -281,23 +286,23 @@ function InlineAuthPreview({
               : "border-zinc-800 text-zinc-300 hover:border-zinc-600",
           )}
         >
-          I already have an account
+          {t("inviteUxLab.btn_already_have_account")}
         </button>
       </div>
 
       <form className="space-y-4">
         {mode === "sign_up" ? (
           <label className="block text-sm">
-            <span className="mb-1 block text-zinc-400">Name</span>
+            <span className="mb-1 block text-zinc-400">{t("inviteUxLab.label_name")}</span>
             <input name="name" className={fieldClassName} defaultValue="Jane Example" readOnly />
           </label>
         ) : null}
         <label className="block text-sm">
-          <span className="mb-1 block text-zinc-400">Email</span>
+          <span className="mb-1 block text-zinc-400">{t("inviteUxLab.label_email")}</span>
           <input name="email" type="email" className={fieldClassName} defaultValue="jane@example.com" readOnly />
         </label>
         <label className="block text-sm">
-          <span className="mb-1 block text-zinc-400">Password</span>
+          <span className="mb-1 block text-zinc-400">{t("inviteUxLab.label_password")}</span>
           <input name="password" type="password" className={fieldClassName} defaultValue="supersecret" readOnly />
         </label>
         {feedback ? (
@@ -306,34 +311,39 @@ function InlineAuthPreview({
           </p>
         ) : null}
         <Button type="button" className="w-full rounded-none" disabled={working}>
-          {working ? "Working..." : mode === "sign_in" ? "Sign in and continue" : "Create account and continue"}
+          {working
+            ? t("inviteUxLab.btn_working")
+            : mode === "sign_in"
+              ? t("inviteUxLab.btn_sign_in_and_continue")
+              : t("inviteUxLab.btn_create_account_and_continue")}
         </Button>
       </form>
 
       <p className="text-xs leading-5 text-zinc-500">
         {mode === "sign_up"
-          ? "Already signed up before? Use the existing-account option instead so the invite lands on the right Paperclip user."
-          : "No account yet? Switch back to create account so you can accept the invite with a new login."}
+          ? t("inviteUxLab.footer_sign_up")
+          : t("inviteUxLab.footer_sign_in")}
       </p>
     </div>
   );
 }
 
 function AgentRequestPreview() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-zinc-100">Submit agent details</h3>
+        <h3 className="text-lg font-semibold text-zinc-100">{t("inviteUxLab.agent_heading")}</h3>
         <p className="mt-1 text-sm text-zinc-400">
-          This invite will create an approval request for a new agent in Acme Robotics.
+          {t("inviteUxLab.agent_description")}
         </p>
       </div>
       <label className="block text-sm">
-        <span className="mb-1 block text-zinc-400">Agent name</span>
+        <span className="mb-1 block text-zinc-400">{t("inviteUxLab.label_agent_name")}</span>
         <input className={fieldClassName} defaultValue="Acme Ops Agent" readOnly />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block text-zinc-400">Adapter type</span>
+        <span className="mb-1 block text-zinc-400">{t("inviteUxLab.label_adapter_type")}</span>
         <select className={fieldClassName} defaultValue="codex_local" disabled>
           <option value="codex_local">Codex</option>
           <option value="claude_local">Claude Code</option>
@@ -341,7 +351,7 @@ function AgentRequestPreview() {
         </select>
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block text-zinc-400">Capabilities</span>
+        <span className="mb-1 block text-zinc-400">{t("inviteUxLab.label_capabilities")}</span>
         <textarea
           className={fieldClassName}
           rows={4}
@@ -350,7 +360,7 @@ function AgentRequestPreview() {
         />
       </label>
       <Button type="button" className="w-full rounded-none">
-        Submit request
+        {t("inviteUxLab.btn_submit_request")}
       </Button>
     </div>
   );
@@ -365,24 +375,25 @@ function AcceptInvitePreview({
   isCurrentMember?: boolean;
   error?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-zinc-100">Accept company invite</h3>
+        <h3 className="text-lg font-semibold text-zinc-100">{t("inviteUxLab.accept_heading")}</h3>
         <p className="mt-1 text-sm text-zinc-400">
           {autoAccept
-            ? "Submitting your join request for Acme Robotics."
+            ? t("inviteUxLab.accept_description_auto_accept")
             : isCurrentMember
-              ? "This account already belongs to Acme Robotics."
-              : "This will submit or complete your join request for Acme Robotics."}
+              ? t("inviteUxLab.accept_description_member")
+              : t("inviteUxLab.accept_description_default")}
         </p>
       </div>
       {error ? <p className="text-xs text-red-400">{error}</p> : null}
       {autoAccept ? (
-        <div className="text-sm text-zinc-400">Submitting request...</div>
+        <div className="text-sm text-zinc-400">{t("inviteUxLab.btn_working")}</div>
       ) : (
         <Button type="button" className="w-full rounded-none" disabled={isCurrentMember}>
-          Accept invite
+          {t("inviteUxLab.btn_accept_invite")}
         </Button>
       )}
     </div>
@@ -402,6 +413,7 @@ function InviteResultPreview({
   onboardingTextUrl?: string;
   joinedNow?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="mx-auto max-w-md border border-zinc-800 bg-zinc-950 p-6 text-zinc-100">
       <div className="flex items-center gap-3">
@@ -417,31 +429,31 @@ function InviteResultPreview({
         <p className="text-sm text-zinc-400">{description}</p>
         {joinedNow ? (
           <Button type="button" className="w-full rounded-none">
-            Open board
+            {t("inviteUxLab.btn_open_board")}
           </Button>
         ) : (
           <>
             <div className="border border-zinc-800 p-3">
-              <p className="mb-1 text-xs text-zinc-500">Approval page</p>
+              <p className="mb-1 text-xs text-zinc-500">{t("inviteUxLab.label_approval_page")}</p>
               <a className="text-sm text-zinc-200 underline underline-offset-2" href="/company/settings/access">
-                Company Settings → Access
+                {t("inviteUxLab.link_company_settings_access")}
               </a>
             </div>
             <p className="text-xs text-zinc-500">
-              Refresh this page after you&apos;ve been approved — you&apos;ll be redirected automatically.
+              {t("inviteUxLab.footer_refresh_approved")}
             </p>
           </>
         )}
         {claimSecret ? (
           <div className="space-y-1 border border-zinc-800 p-3 text-xs text-zinc-400">
-            <div className="text-zinc-200">Claim secret</div>
+            <div className="text-zinc-200">{t("inviteUxLab.label_claim_secret")}</div>
             <div className="font-mono break-all">{claimSecret}</div>
             <div className="font-mono break-all">POST /api/agents/claim-api-key</div>
           </div>
         ) : null}
         {onboardingTextUrl ? (
           <div className="text-xs text-zinc-400">
-            Onboarding: <span className="font-mono break-all">{onboardingTextUrl}</span>
+            {t("inviteUxLab.label_onboarding")} <span className="font-mono break-all">{onboardingTextUrl}</span>
           </div>
         ) : null}
       </div>
@@ -450,6 +462,7 @@ function InviteResultPreview({
 }
 
 function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error?: string }) {
+  const { t } = useTranslation();
   return (
     <div className="overflow-hidden rounded-[28px] border border-border/70 bg-background shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
       <div className="grid gap-px bg-border/60 md:grid-cols-2">
@@ -460,17 +473,17 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
               <span className="text-sm font-medium">Paperclip</span>
             </div>
             <h3 className="text-xl font-semibold">
-              {mode === "sign_in" ? "Sign in to Paperclip" : "Create your Paperclip account"}
+              {mode === "sign_in" ? t("inviteUxLab.auth_sign_in_heading") : t("inviteUxLab.auth_sign_up_heading")}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
               {mode === "sign_in"
-                ? "Use your email and password to access this instance."
-                : "Create an account for this instance. Email confirmation is not required in v1."}
+                ? t("inviteUxLab.auth_sign_in_description")
+                : t("inviteUxLab.auth_sign_up_description")}
             </p>
             <div className="mt-6 space-y-4">
               {mode === "sign_up" ? (
                 <label className="block">
-                  <span className="mb-1 block text-xs text-muted-foreground">Name</span>
+                  <span className="mb-1 block text-xs text-muted-foreground">{t("inviteUxLab.label_name")}</span>
                   <input
                     className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
                     defaultValue="Jane Example"
@@ -479,7 +492,7 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
                 </label>
               ) : null}
               <label className="block">
-                <span className="mb-1 block text-xs text-muted-foreground">Email</span>
+                <span className="mb-1 block text-xs text-muted-foreground">{t("inviteUxLab.label_email")}</span>
                 <input
                   className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
                   defaultValue="jane@example.com"
@@ -487,7 +500,7 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
                 />
               </label>
               <label className="block">
-                <span className="mb-1 block text-xs text-muted-foreground">Password</span>
+                <span className="mb-1 block text-xs text-muted-foreground">{t("inviteUxLab.label_password")}</span>
                 <input
                   className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
                   defaultValue="supersecret"
@@ -496,13 +509,13 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
               </label>
               {error ? <p className="text-xs text-destructive">{error}</p> : null}
               <Button type="button" className="w-full">
-                {mode === "sign_in" ? "Sign In" : "Create Account"}
+                {mode === "sign_in" ? t("inviteUxLab.btn_sign_in") : t("inviteUxLab.btn_create_account_btn")}
               </Button>
             </div>
             <div className="mt-5 text-sm text-muted-foreground">
-              {mode === "sign_in" ? "Need an account?" : "Already have an account?"}{" "}
+              {mode === "sign_in" ? t("inviteUxLab.auth_need_account") : t("inviteUxLab.auth_have_account")}{" "}
               <span className="font-medium text-foreground underline underline-offset-2">
-                {mode === "sign_in" ? "Create one" : "Sign in"}
+                {mode === "sign_in" ? t("inviteUxLab.auth_link_create") : t("inviteUxLab.auth_link_sign_in")}
               </span>
             </div>
           </div>
@@ -510,11 +523,11 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
         <div className="hidden min-h-[420px] items-center justify-center bg-[radial-gradient(circle_at_top,rgba(8,145,178,0.18),transparent_48%),linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,1))] px-8 py-10 md:flex">
           <div className="max-w-sm space-y-4 text-zinc-200">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/[0.08] px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-cyan-200">
-              Auth preview
+              {t("inviteUxLab.badge_auth_preview")}
             </div>
-            <div className="text-2xl font-semibold">Side-by-side signup styling review</div>
+            <div className="text-2xl font-semibold">{t("inviteUxLab.auth_preview_heading")}</div>
             <p className="text-sm leading-6 text-zinc-400">
-              This frame mirrors the production auth surface so spacing, label density, button treatments, and desktop composition are easy to compare.
+              {t("inviteUxLab.auth_preview_description")}
             </p>
           </div>
         </div>
@@ -524,24 +537,25 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
 }
 
 function CompanyInvitesPreview() {
+  const { t } = useTranslation();
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
       <Card className="rounded-[28px] shadow-none">
         <CardHeader className="space-y-3">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MailPlus className="h-4 w-4" />
-            Company Invites
+            {t("inviteUxLab.company_invites_header")}
           </div>
           <div>
-            <CardTitle>Create invite</CardTitle>
+            <CardTitle>{t("inviteUxLab.create_invite_title")}</CardTitle>
             <CardDescription className="mt-2">
-              Generate a human invite link and choose the default access it should request.
+              {t("inviteUxLab.create_invite_description")}
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <fieldset className="space-y-3">
-            <legend className="text-sm font-medium">Choose a role</legend>
+            <legend className="text-sm font-medium">{t("inviteUxLab.choose_role_label")}</legend>
             <div className="rounded-2xl border border-border">
               {inviteRoleOptions.map((option, index) => (
                 <label
@@ -559,7 +573,7 @@ function CompanyInvitesPreview() {
                       <span className="text-sm font-medium">{option.label}</span>
                       {option.value === "operator" ? (
                         <span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
-                          Default
+                          {t("inviteUxLab.role_default_badge")}
                         </span>
                       ) : null}
                     </span>
@@ -572,25 +586,25 @@ function CompanyInvitesPreview() {
           </fieldset>
 
           <div className="rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground">
-            Each invite link is single-use. The first successful use consumes the link and creates or reuses the matching join request before approval.
+            {t("inviteUxLab.invite_single_use_note")}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="button">Create invite</Button>
-            <span className="text-sm text-muted-foreground">Invite history below keeps the audit trail.</span>
+            <Button type="button">{t("inviteUxLab.btn_create_invite")}</Button>
+            <span className="text-sm text-muted-foreground">{t("inviteUxLab.invite_history_note")}</span>
           </div>
 
           <div className="space-y-3 rounded-2xl border border-border px-4 py-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm font-medium">Latest invite link</div>
+                <div className="text-sm font-medium">{t("inviteUxLab.latest_invite_link_title")}</div>
                 <div className="text-sm text-muted-foreground">
-                  This URL includes the current Paperclip domain returned by the server.
+                  {t("inviteUxLab.latest_invite_link_description")}
                 </div>
               </div>
               <div className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
                 <Check className="h-3.5 w-3.5" />
-                Copied
+                {t("inviteUxLab.copied_label")}
               </div>
             </div>
             <button
@@ -602,7 +616,7 @@ function CompanyInvitesPreview() {
             <div className="flex flex-wrap gap-2">
               <Button type="button" size="sm" variant="outline">
                 <ExternalLink className="h-4 w-4" />
-                Open invite
+                {t("inviteUxLab.btn_open_invite")}
               </Button>
             </div>
           </div>
@@ -613,13 +627,13 @@ function CompanyInvitesPreview() {
         <CardHeader className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <CardTitle>Invite history</CardTitle>
+              <CardTitle>{t("inviteUxLab.invite_history_title")}</CardTitle>
               <CardDescription className="mt-2">
-                Review invite status, role, inviter, and any linked join request.
+                {t("inviteUxLab.invite_history_description")}
               </CardDescription>
             </div>
             <a href="/inbox/requests" className="text-sm underline underline-offset-4">
-              Open join request queue
+              {t("inviteUxLab.link_open_join_queue")}
             </a>
           </div>
         </CardHeader>
@@ -628,12 +642,12 @@ function CompanyInvitesPreview() {
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="px-5 py-3 font-medium text-muted-foreground">State</th>
-                  <th className="px-5 py-3 font-medium text-muted-foreground">Role</th>
-                  <th className="px-5 py-3 font-medium text-muted-foreground">Invited by</th>
-                  <th className="px-5 py-3 font-medium text-muted-foreground">Created</th>
-                  <th className="px-5 py-3 font-medium text-muted-foreground">Join request</th>
-                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">Action</th>
+                  <th className="px-5 py-3 font-medium text-muted-foreground">{t("inviteUxLab.table_state")}</th>
+                  <th className="px-5 py-3 font-medium text-muted-foreground">{t("inviteUxLab.table_role")}</th>
+                  <th className="px-5 py-3 font-medium text-muted-foreground">{t("inviteUxLab.table_invited_by")}</th>
+                  <th className="px-5 py-3 font-medium text-muted-foreground">{t("inviteUxLab.table_created")}</th>
+                  <th className="px-5 py-3 font-medium text-muted-foreground">{t("inviteUxLab.table_join_request")}</th>
+                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">{t("inviteUxLab.table_action")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -662,10 +676,10 @@ function CompanyInvitesPreview() {
                     <td className="px-5 py-3 text-right align-top">
                       {invite.action === "Revoke" ? (
                         <Button type="button" size="sm" variant="outline">
-                          Revoke
+                          {t("inviteUxLab.btn_revoke")}
                         </Button>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Inactive</span>
+                        <span className="text-xs text-muted-foreground">{t("inviteUxLab.inactive_label")}</span>
                       )}
                     </td>
                   </tr>
@@ -676,15 +690,15 @@ function CompanyInvitesPreview() {
 
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-2xl border border-border p-4">
-              <div className="text-sm font-medium">Empty history state</div>
+              <div className="text-sm font-medium">{t("inviteUxLab.empty_history_title")}</div>
               <div className="mt-2 text-sm text-muted-foreground">
-                No invites have been created for this company yet.
+                {t("inviteUxLab.empty_history_description")}
               </div>
             </div>
             <div className="rounded-2xl border border-rose-400/40 bg-rose-500/[0.07] p-4">
-              <div className="text-sm font-medium text-foreground">Permission error</div>
+              <div className="text-sm font-medium text-foreground">{t("inviteUxLab.permission_error_title")}</div>
               <div className="mt-2 text-sm text-muted-foreground">
-                You do not have permission to manage company invites.
+                {t("inviteUxLab.permission_error_description")}
               </div>
             </div>
           </div>
@@ -695,6 +709,7 @@ function CompanyInvitesPreview() {
 }
 
 export function InviteUxLab() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="overflow-hidden rounded-[32px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.10),transparent_28%),linear-gradient(180deg,rgba(245,158,11,0.10),transparent_44%),var(--background)] shadow-[0_30px_80px_rgba(15,23,42,0.10)]">
@@ -702,37 +717,37 @@ export function InviteUxLab() {
           <div className="p-6 sm:p-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/[0.08] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-700 dark:text-cyan-300">
               <FlaskConical className="h-3.5 w-3.5" />
-              Invite UX Lab
+              {t("inviteUxLab.badge_label")}
             </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight">Invite and signup UX review surface</h1>
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight">{t("inviteUxLab.page_title")}</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
-              This page collects the current invite landing, signup, approval-result, and company invite-management states in one place so styling changes can be reviewed without recreating each backend condition by hand.
+              {t("inviteUxLab.page_description")}
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.18em]">
-                /tests/ux/invites
+                {t("inviteUxLab.badge_tests_ux_invites")}
               </Badge>
               <Badge variant="outline" className="rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.18em]">
-                signup + invite states
+                {t("inviteUxLab.badge_signup_invite_states")}
               </Badge>
               <Badge variant="outline" className="rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.18em]">
-                fixture-backed preview
+                {t("inviteUxLab.badge_fixture_backed_preview")}
               </Badge>
             </div>
           </div>
 
           <aside className="border-t border-border/60 bg-background/70 p-6 lg:border-l lg:border-t-0">
             <div className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Covered states
+              {t("inviteUxLab.covered_states")}
             </div>
             <div className="space-y-3">
               {[
-                "Invite loading, access-check, missing-token, and unavailable states",
-                "Inline account creation and sign-in variants, including feedback/error copy",
-                "Human accept, agent request, and auto-accept transitions",
-                "Pending approval, joined-now, claim secret, and onboarding result screens",
-                "Company invite creation, copied-link, history, empty, and permission-error states",
+                t("inviteUxLab.states_loading_access"),
+                t("inviteUxLab.states_inline_auth"),
+                t("inviteUxLab.states_accept_transitions"),
+                t("inviteUxLab.states_pending_joined"),
+                t("inviteUxLab.states_company_invite"),
               ].map((highlight) => (
                 <div
                   key={highlight}
@@ -747,63 +762,63 @@ export function InviteUxLab() {
       </div>
 
       <LabSection
-        eyebrow="Top-level states"
-        title="Landing state coverage"
-        description="Small cards for the fast-return invite states that do not render the full split-screen layout."
+        eyebrow={t("inviteUxLab.lab_top_level_eyebrow")}
+        title={t("inviteUxLab.lab_top_level_title")}
+        description={t("inviteUxLab.lab_top_level_description")}
         accentClassName="bg-[linear-gradient(180deg,rgba(59,130,246,0.05),transparent_30%),var(--background)]"
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatusCard
             icon={<Loader2 className="h-4 w-4 animate-spin" />}
-            title="Loading invite"
-            body="Shown while invite summary, deployment mode, or auth session data is still loading."
+            title={t("inviteUxLab.status_loading_title")}
+            body={t("inviteUxLab.status_loading_body")}
           />
           <StatusCard
             icon={<Clock3 className="h-4 w-4" />}
-            title="Checking your access"
-            body="Shown after sign-in while the app verifies whether the current user already belongs to the invited company."
+            title={t("inviteUxLab.status_checking_title")}
+            body={t("inviteUxLab.status_checking_body")}
           />
           <StatusCard
             icon={<KeyRound className="h-4 w-4" />}
-            title="Invalid invite token"
-            body="The token is missing entirely, so the page short-circuits before any invite lookup."
+            title={t("inviteUxLab.status_invalid_token_title")}
+            body={t("inviteUxLab.status_invalid_token_body")}
             tone="error"
           />
           <StatusCard
             icon={<Link2 className="h-4 w-4" />}
-            title="Invite not available"
-            body="Used for expired, revoked, already-consumed, or otherwise missing invites."
+            title={t("inviteUxLab.status_not_available_title")}
+            body={t("inviteUxLab.status_not_available_body")}
             tone="warn"
           />
           <StatusCard
             icon={<ShieldCheck className="h-4 w-4" />}
-            title="Bootstrap complete"
-            body="Result screen for bootstrap CEO invites after setup has been accepted successfully."
+            title={t("inviteUxLab.status_bootstrap_complete_title")}
+            body={t("inviteUxLab.status_bootstrap_complete_body")}
             tone="success"
           />
           <StatusCard
             icon={<ArrowRight className="h-4 w-4" />}
-            title="Auto-accept in progress"
-            body="Signed-in human users skip the extra button click and move straight into join submission."
+            title={t("inviteUxLab.status_auto_accept_title")}
+            body={t("inviteUxLab.status_auto_accept_body")}
           />
           <StatusCard
             icon={<Users className="h-4 w-4" />}
-            title="Already a member"
-            body="Acceptance stays disabled and the page redirects into the company once membership is confirmed."
+            title={t("inviteUxLab.status_already_member_title")}
+            body={t("inviteUxLab.status_already_member_body")}
           />
           <StatusCard
             icon={<UserPlus className="h-4 w-4" />}
-            title="Invite result surfaces"
-            body="Both pending-approval and joined-now confirmations are included below with claim and onboarding extras."
+            title={t("inviteUxLab.status_result_surfaces_title")}
+            body={t("inviteUxLab.status_result_surfaces_body")}
             tone="success"
           />
         </div>
       </LabSection>
 
       <LabSection
-        eyebrow="Invite landing"
-        title="Split-screen invite flows"
-        description="These frames mirror the production invite surface closely enough to review spacing, hierarchy, and control states while keeping data fixture-driven."
+        eyebrow={t("inviteUxLab.lab_invite_landing_eyebrow")}
+        title={t("inviteUxLab.lab_invite_landing_title")}
+        description={t("inviteUxLab.lab_invite_landing_description")}
         accentClassName="bg-[linear-gradient(180deg,rgba(234,179,8,0.06),transparent_28%),var(--background)]"
       >
         <div className="space-y-5">
@@ -811,7 +826,7 @@ export function InviteUxLab() {
             left={
               <InviteSummaryPanel
                 title="Join Acme Robotics"
-                description="Create your Paperclip account first. If you already have one, switch to sign in and continue the invite with the same email."
+                description={t("inviteUxLab.inline_sign_up_description")}
                 inviteMessage="Welcome aboard."
                 requestedAccess="Operator"
               />
@@ -823,7 +838,7 @@ export function InviteUxLab() {
             left={
               <InviteSummaryPanel
                 title="Join Acme Robotics"
-                description="Create your Paperclip account first. If you already have one, switch to sign in and continue the invite with the same email."
+                description={t("inviteUxLab.inline_sign_up_description")}
                 inviteMessage="Welcome aboard."
                 requestedAccess="Operator"
               />
@@ -843,7 +858,7 @@ export function InviteUxLab() {
             left={
               <InviteSummaryPanel
                 title="Join Acme Robotics"
-                description="Your account is ready. Review the invite details, then accept it to continue."
+                description={t("inviteUxLab.inline_sign_up_description")}
                 inviteMessage="Welcome aboard."
                 requestedAccess="Operator"
                 signedInLabel="Jane Example"
@@ -856,7 +871,7 @@ export function InviteUxLab() {
             left={
               <InviteSummaryPanel
                 title="Join Acme Robotics"
-                description="Review the invite details, then submit the agent information below to start the join request."
+                description={t("inviteUxLab.agent_description")}
                 requestedAccess="Agent join request"
               />
             }
@@ -867,45 +882,45 @@ export function InviteUxLab() {
             left={
               <InviteSummaryPanel
                 title="Join Acme Robotics"
-                description="Your account is ready. Review the invite details, then accept it to continue."
+                description={t("inviteUxLab.inline_sign_up_description")}
                 requestedAccess="Operator"
                 signedInLabel="Jane Example"
               />
             }
-            right={<AcceptInvitePreview error="This account already belongs to the company." isCurrentMember />}
+            right={<AcceptInvitePreview error={t("inviteUxLab.accept_error_member")} isCurrentMember />}
           />
         </div>
       </LabSection>
 
       <LabSection
-        eyebrow="Result states"
-        title="Approval and completion screens"
-        description="These are the post-submit states returned from invite acceptance, including optional claim and onboarding metadata."
+        eyebrow={t("inviteUxLab.lab_result_eyebrow")}
+        title={t("inviteUxLab.lab_result_title")}
+        description={t("inviteUxLab.lab_result_description")}
         accentClassName="bg-[linear-gradient(180deg,rgba(16,185,129,0.06),transparent_30%),var(--background)]"
       >
         <div className="grid gap-5 xl:grid-cols-3">
           <InviteResultPreview
-            title="Request to join Acme Robotics"
-            description="Board User must approve your request to join."
+            title={t("inviteUxLab.result_request_title")}
+            description={t("inviteUxLab.result_request_description")}
             claimSecret="pcp_claim_secret_demo"
             onboardingTextUrl="/api/invites/pcp_invite_test/onboarding.txt"
           />
           <InviteResultPreview
-            title="You joined the company"
-            description="Your account already matched the approved invite, so the board can be opened immediately."
+            title={t("inviteUxLab.result_joined_title")}
+            description={t("inviteUxLab.result_joined_description")}
             joinedNow
           />
           <InviteResultPreview
-            title="Request to join Acme Robotics"
-            description="Ask them to visit Company Settings → Access to approve your request."
+            title={t("inviteUxLab.result_request_title")}
+            description={t("inviteUxLab.result_ask_approve_description")}
           />
         </div>
       </LabSection>
 
       <LabSection
-        eyebrow="Standalone auth"
-        title="Auth page states"
-        description="The general `/auth` page uses a different composition from invite landing. These previews keep both sign-in and sign-up variants visible."
+        eyebrow={t("inviteUxLab.lab_standalone_auth_eyebrow")}
+        title={t("inviteUxLab.lab_standalone_auth_title")}
+        description={t("inviteUxLab.lab_standalone_auth_description")}
         accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.06),transparent_28%),var(--background)]"
       >
         <div className="space-y-5">
@@ -915,9 +930,9 @@ export function InviteUxLab() {
       </LabSection>
 
       <LabSection
-        eyebrow="Company settings"
-        title="Company invite management"
-        description="This section captures the board-side invite creation flow, copied-link state, audit table, and the edge states that are otherwise tedious to stage."
+        eyebrow={t("inviteUxLab.lab_company_settings_eyebrow")}
+        title={t("inviteUxLab.lab_company_settings_title")}
+        description={t("inviteUxLab.lab_company_settings_description")}
         accentClassName="bg-[linear-gradient(180deg,rgba(244,114,182,0.06),transparent_28%),var(--background)]"
       >
         <CompanyInvitesPreview />
