@@ -1,0 +1,80 @@
+name: Check New Strings
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # 04:00 UTC = 01:00 BRT (after sync)
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'ui/src/**'
+      - '!.github/workflows/**'
+
+jobs:
+  detect-new-strings:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find new English strings
+        id: scan
+        run: |
+          # Get list of tsx/ts files (exclude tests)
+          files=$(find ui/src -name "*.tsx" -o -name "*.ts" | grep -v test | grep -v node_modules)
+
+          # Extract all string literals that look like user-facing text
+          # Filter for strings with 3+ chars containing letters (exclude variables, paths, etc)
+          new_strings=""
+          for f in $files; do
+            if [ -f "$f" ]; then
+              # Extract JSX text content and string props
+              grep -oP '"[A-Za-z][A-Za-z ]{2,}[A-Za-z]"|'"'"'[A-Za-z][A-Za-z ]{2,}[A-Za-z]'"'"'' "$f" 2>/dev/null | \
+                tr -d '"'"'" | \
+                grep -vE "^[a-z]|^\d|^\.\.|^@|^/" | \
+                sort -u >> /tmp/all_strings.txt || true
+            fi
+          done
+
+          # Load existing keys from en.json
+          existing_keys=$(cat ui/src/locales/en.json | jq -r '.. | select(type == "string")?' 2>/dev/null | sort -u)
+
+          # Find strings not in en.json (simplified check)
+          missing=""
+          while IFS= read -r line; do
+            if [ -n "$line" ] && [ ${#line} -gt 3 ]; then
+              if ! echo "$existing_keys" | grep -qF "$line"; then
+                missing="$missing\n$line"
+              fi
+            fi
+          done < /tmp/all_strings.txt
+
+          echo "count=$(echo -e "$missing" | grep -c "^" || echo 0)" >> $GITHUB_OUTPUT
+          echo -e "$missing" | grep -v "^$" | head -50 > /tmp/new_strings.txt
+          echo "strings_file=/tmp/new_strings.txt" >> $GITHUB_OUTPUT
+
+      - name: Create issue with new strings
+        if: steps.scan.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const newStrings = fs.readFileSync('/tmp/new_strings.txt', 'utf8')
+              .split('\n')
+              .filter(s => s.trim())
+              .slice(0, 30);
+
+            const count = newStrings.length;
+            const moreCount = parseInt('${{ steps.scan.outputs.count }}') - 30;
+
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📝 Novas strings para traduzir (${count}${moreCount > 0 ? '+' : ''})`,
+              body: `## Resumo\n\nEncontradas **${count}** novas strings em inglês que ainda não estão no \`en.json\`.\n\n${moreCount > 0 ? `*+${moreCount} strings restantes não listadas*\n` : ''}\n## Strings a traduzir\n\n\`\`\`\n${newStrings.map(s => `- ${s}`).join('\n')}\n\`\`\`\n\n## Ação necessária\n\nAdicione estas strings ao \`ui/src/locales/en.json\` e \`ui/src/locales/pt-BR.json\` usando o formato:\n\n\n\`\`\`json\n{\n  "section": {\n    "key": "Translation em português"\n  }\n}\n\`\`\`\n\n## Como encontrar mais strings\n\nPara escanear todas as strings restantes:\n\n\`\`\`bash\ncd ui/src\nfind . -name "*.tsx" -o -name "*.ts" | grep -v test | xargs grep -oP '"[A-Za-z][A-Za-z ]{2,}[A-Za-z]"'\n\`\`\``,
+              labels: ['translation', 'needs-review']
+            });
+            core.setOutput('issue_number', issue.number);

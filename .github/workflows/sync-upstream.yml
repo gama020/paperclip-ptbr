@@ -1,0 +1,101 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # 03:00 UTC = 00:00 BRT
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Check New Strings"]
+    types: [completed]
+    branches: [master]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/paperclipai/paperclip.git
+          git fetch upstream
+
+      - name: Check if upstream has changes
+        id: check
+        run: |
+          upstream_commit=$(git rev-parse upstream/main)
+          current_commit=$(git rev-parse master)
+          if [ "$upstream_commit" = "$current_commit" ]; then
+            echo "status=synced" >> $GITHUB_OUTPUT
+            echo "message=Already synced with upstream" >> $GITHUB_OUTPUT
+          else
+            echo "status=needs_sync" >> $GITHUB_OUTPUT
+            echo "message=New upstream changes detected" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Sync with upstream
+        if: steps.check.outputs.status == 'needs_sync'
+        run: |
+          git merge upstream/main --no-edit --no-ff
+        continue-on-error: true
+
+      - name: Check for merge conflicts
+        id: conflicts
+        if: steps.check.outputs.status == 'needs_sync'
+        run: |
+          if git mergetool --no-prompt --no-commit; then
+            echo "status=clean" >> $GITHUB_OUTPUT
+          else
+            echo "status=conflicts" >> $GITHUB_OUTPUT
+            git merge --abort || true
+          fi
+
+      - name: Detect conflicting translation files
+        if: steps.conflicts.outputs.status == 'conflicts'
+        run: |
+          conflicting_files=$(git diff --name-only --diff-filter=U | grep -E "(locales/|i18n\.ts)" || true)
+          echo "files=$conflicting_files" >> $GITHUB_OUTPUT
+          echo "has_translation_conflicts=false" >> $GITHUB_OUTPUT
+          if [ -n "$conflicting_files" ]; then
+            echo "has_translation_conflicts=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Abort merge if translation files conflict
+        if: steps.conflicts.outputs.status == 'conflicts' && steps.conflicts.outputs.has_translation_conflicts == 'true'
+        run: |
+          git merge --abort || true
+          echo "Translation files had conflicts - aborting to preserve translations"
+
+      - name: Create conflict issue
+        if: steps.conflicts.outputs.status == 'conflicts' && steps.conflicts.outputs.has_translation_conflicts != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const conflictingFiles = await execSync('git diff --name-only --diff-filter=U').toString().trim().split('\n').filter(f => f);
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '⚠️ Conflito de merge com upstream - Ação manual necessária',
+              body: `## Resumo\n\nDetectamos conflito(s) de merge com o upstream **paperclipai/paperclip**.\n\n## Arquivos em conflito\n\n${conflictingFiles.map(f => `- \`${f}\``).join('\n')}\n\n## Ação necessária\n\n1. Resolva os conflitos manualmente\n2. Garanta que os arquivos de tradução não sejam sobrescritos:\n   - \`ui/src/locales/pt-BR.json\`\n   - \`ui/src/locales/en.json\`\n   - \`ui/src/i18n.ts\`\n3. Commite a resolução\n\n## Como resolver\n\n\`\`\`bash\ngit checkout master\ngit fetch upstream\ngit merge upstream/main\n# resolva conflitos manualmente\ngit add .\ngit commit -m "resolve: merge conflicts with upstream"\ngit push origin master\n\`\`\``,
+              labels: ['sync', 'needs-manual-action']
+            });
+            core.setOutput('issue_number', issue.number);
+
+      - name: Push sync commit
+        if: steps.conflicts.outputs.status == 'clean'
+        run: |
+          git push upstream master --quiet || true
+          git push origin master --quiet
