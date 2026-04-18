@@ -7,6 +7,7 @@ import {
   useAuiState,
   useMessage,
 } from "@assistant-ui/react";
+import { useTranslation } from "react-i18next";
 import type { ToolCallMessagePart } from "@assistant-ui/react";
 import {
   createContext,
@@ -341,15 +342,16 @@ function IssueChatFallbackThread({
   emptyMessage: string;
   variant: "full" | "embedded";
 }) {
+  const { t } = useTranslation();
   return (
     <div className={cn(variant === "embedded" ? "space-y-3" : "space-y-4")}>
       <div className="rounded-xl border border-amber-300/60 bg-amber-50/80 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200">
         <div className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="space-y-1">
-            <p className="font-medium">Chat renderer hit an internal state error.</p>
+            <p className="font-medium">{t("issueChatThread.renderer_error_title")}</p>
             <p className="text-xs opacity-80">
-              Showing a safe fallback transcript instead of crashing the issues page.
+              {t("issueChatThread.renderer_error_body")}
             </p>
           </div>
         </div>
@@ -382,7 +384,7 @@ function IssueChatFallbackThread({
                   {lines.length > 0 ? lines.map((line, index) => (
                     <MarkdownBody key={`${message.id}:fallback:${index}`}>{line}</MarkdownBody>
                   )) : (
-                    <p className="text-sm text-muted-foreground">No message content.</p>
+                    <p className="text-sm text-muted-foreground">{t("issueChatThread.no_message_content")}</p>
                   )}
                 </div>
               </div>
@@ -551,7 +553,7 @@ function runStatusClass(status: string) {
   }
 }
 
-function toolCountSummary(toolParts: ToolCallMessagePart[]): string | null {
+function toolCountSummary(t: (key: string, options?: Record<string, unknown>) => string, toolParts: ToolCallMessagePart[]): string | null {
   if (toolParts.length === 0) return null;
   let commands = 0;
   let other = 0;
@@ -560,8 +562,8 @@ function toolCountSummary(toolParts: ToolCallMessagePart[]): string | null {
     else other++;
   }
   const parts: string[] = [];
-  if (commands > 0) parts.push(`ran ${commands} command${commands === 1 ? "" : "s"}`);
-  if (other > 0) parts.push(`called ${other} tool${other === 1 ? "" : "s"}`);
+  if (commands > 0) parts.push(t("issueChatThread.ran_commands", { count: commands }));
+  if (other > 0) parts.push(t("issueChatThread.called_tools", { count: other }));
   return parts.join(", ");
 }
 
@@ -575,6 +577,7 @@ function cleanToolDisplayText(tool: ToolCallMessagePart): string {
 }
 
 function IssueChatChainOfThought() {
+  const { t } = useTranslation();
   const { agentMap } = useContext(IssueChatCtx);
   const message = useMessage();
   const custom = message.metadata.custom as Record<string, unknown>;
@@ -616,18 +619,18 @@ function IssueChatChainOfThought() {
   let headerVerb: string;
   let headerSuffix: string | null = null;
   if (isActive) {
-    headerVerb = "Working";
-    if (liveElapsed) headerSuffix = `for ${liveElapsed}`;
+    headerVerb = t("issueChatThread.working");
+    if (liveElapsed) headerSuffix = t("issueChatThread.for_duration", { duration: liveElapsed });
   } else if (segmentTiming) {
     const durationMs = segmentTiming.endMs - segmentTiming.startMs;
     const durationText = formatDurationWords(durationMs);
-    headerVerb = "Worked";
-    if (durationText) headerSuffix = `for ${durationText}`;
+    headerVerb = t("issueChatThread.worked");
+    if (durationText) headerSuffix = t("issueChatThread.for_duration", { duration: durationText });
   } else {
-    headerVerb = "Worked";
+    headerVerb = t("issueChatThread.worked");
   }
 
-  const toolSummary = toolCountSummary(toolParts);
+  const toolSummary = toolCountSummary(t, toolParts);
   const hasContent = allReasoningText.trim().length > 0 || toolParts.length > 0;
 
   return (
@@ -796,6 +799,7 @@ function IssueChatRollingToolPart({ toolParts }: { toolParts: ToolCallMessagePar
 }
 
 function CopyablePreBlock({ children, className }: { children: string; className?: string }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   return (
     <div className="group/pre relative">
@@ -806,8 +810,8 @@ function CopyablePreBlock({ children, className }: { children: string; className
           "absolute right-1.5 top-1.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-background/80 text-muted-foreground opacity-0 backdrop-blur-sm transition-opacity hover:text-foreground group-hover/pre:opacity-100",
           copied && "opacity-100",
         )}
-        title="Copy"
-        aria-label="Copy"
+        title={t("common.copy")}
+        aria-label={t("common.copy")}
         onClick={() => {
           void navigator.clipboard.writeText(children).then(() => {
             setCopied(true);
@@ -842,6 +846,7 @@ function IssueChatToolPart({
   result?: unknown;
   isError?: boolean;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const rawArgsText = argsText ?? "";
   const parsedArgs = args ?? parseToolPayload(rawArgsText);
@@ -893,7 +898,7 @@ function IssueChatToolPart({
             {nonIntentDetails.length > 0 ? (
               <div>
                 <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
-                  Input
+                  {t("issueChatThread.input")}
                 </div>
                 <dl className="space-y-1.5">
                   {nonIntentDetails.map((detail) => (
@@ -911,7 +916,7 @@ function IssueChatToolPart({
             ) : rawArgsText ? (
               <div>
                 <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
-                  Input
+                  {t("issueChatThread.input")}
                 </div>
                 <CopyablePreBlock className="overflow-x-auto rounded-md bg-accent/30 p-2 text-[11px] leading-4 text-foreground/70">{rawArgsText}</CopyablePreBlock>
               </div>
@@ -919,7 +924,7 @@ function IssueChatToolPart({
             {result !== undefined ? (
               <div>
                 <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
-                  Result
+                  {t("issueChatThread.result")}
                 </div>
                 <CopyablePreBlock className="overflow-x-auto rounded-md bg-accent/30 p-2 text-[11px] leading-4 text-foreground/70">{resultText}</CopyablePreBlock>
               </div>
@@ -932,6 +937,7 @@ function IssueChatToolPart({
 }
 
 function IssueChatUserMessage() {
+  const { t } = useTranslation();
   const {
     onInterruptQueued,
     onCancelQueued,
@@ -982,7 +988,7 @@ function IssueChatUserMessage() {
         {queued ? (
           <div className="mb-1.5 flex items-center gap-2">
             <span className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-amber-800 dark:border-amber-400/40 dark:bg-amber-500/20 dark:text-amber-200">
-              Queued
+              {t("issueChatThread.queued")}
             </span>
             {queueTargetRunId && onInterruptQueued ? (
               <Button
@@ -992,7 +998,7 @@ function IssueChatUserMessage() {
                 disabled={interruptingQueuedRunId === queueTargetRunId}
                 onClick={() => void onInterruptQueued(queueTargetRunId)}
               >
-                {interruptingQueuedRunId === queueTargetRunId ? "Interrupting..." : "Interrupt"}
+                {interruptingQueuedRunId === queueTargetRunId ? t("issueChatThread.interrupting") : t("issueChatThread.interrupt")}
               </Button>
             ) : null}
             {onCancelQueued ? (
@@ -1002,7 +1008,7 @@ function IssueChatUserMessage() {
                 className="h-6 border-amber-300 px-2 text-[11px] text-amber-900 hover:bg-amber-100/80 hover:text-amber-950 dark:border-amber-500/40 dark:text-amber-100 dark:hover:bg-amber-500/10"
                 onClick={() => onCancelQueued(commentId)}
               >
-                Cancel
+                {t("issueChatThread.cancel")}
               </Button>
             ) : null}
           </div>
@@ -1018,7 +1024,7 @@ function IssueChatUserMessage() {
 
       {pending ? (
         <div className={cn("mt-1 flex px-1 text-[11px] text-muted-foreground", isCurrentUser ? "justify-end" : "justify-start")}>
-          Sending...
+          {t("issueChatThread.sending")}
         </div>
       ) : (
         <div
@@ -1043,8 +1049,8 @@ function IssueChatUserMessage() {
           <button
             type="button"
             className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-            title="Copy message"
-            aria-label="Copy message"
+            title={t("issueChatThread.copy_message")}
+            aria-label={t("issueChatThread.copy_message")}
             onClick={() => {
               const text = message.content
                 .filter((p): p is { type: "text"; text: string } => p.type === "text")
@@ -1083,6 +1089,7 @@ function IssueChatUserMessage() {
 }
 
 function IssueChatAssistantMessage() {
+  const { t } = useTranslation();
   const {
     feedbackVoteByTargetId,
     feedbackDataSharingPreference,
@@ -1100,7 +1107,7 @@ function IssueChatAssistantMessage() {
     ? custom.authorName
     : typeof custom.runAgentName === "string"
       ? custom.runAgentName
-      : "Agent";
+      : t("issueChatThread.agent");
   const authorAgentId = typeof custom.authorAgentId === "string" ? custom.authorAgentId : null;
   const runId = typeof custom.runId === "string" ? custom.runId : null;
   const runAgentId = typeof custom.runAgentId === "string" ? custom.runAgentId : null;
@@ -1183,7 +1190,7 @@ function IssueChatAssistantMessage() {
               {isRunning ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-cyan-700 dark:text-cyan-200">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  Running
+                  {t("issueChatThread.running")}
                 </span>
               ) : null}
             </div>
@@ -1228,8 +1235,8 @@ function IssueChatAssistantMessage() {
                 <ActionBarPrimitive.Copy
                   copiedDuration={2000}
                   className="group inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground data-[copied=true]:text-foreground"
-                  title="Copy message"
-                  aria-label="Copy message"
+                  title={t("issueChatThread.copy_message")}
+                  aria-label={t("issueChatThread.copy_message")}
                 >
                   <Copy className="h-3.5 w-3.5 group-data-[copied=true]:hidden" />
                   <Check className="hidden h-3.5 w-3.5 group-data-[copied=true]:block" />
@@ -1261,8 +1268,8 @@ function IssueChatAssistantMessage() {
                       variant="ghost"
                       size="icon-xs"
                       className="text-muted-foreground hover:text-foreground"
-                      title="More actions"
-                      aria-label="More actions"
+                      title={t("issueChatThread.more_actions")}
+                      aria-label={t("issueChatThread.more_actions")}
                     >
                       <MoreHorizontal className="h-3.5 w-3.5" />
                     </Button>
@@ -1278,7 +1285,7 @@ function IssueChatAssistantMessage() {
                       }}
                     >
                       <Copy className="mr-2 h-3.5 w-3.5" />
-                      Copy message
+                      {t("issueChatThread.copy_message")}
                     </DropdownMenuItem>
                     {canStopRun && onStopRun && runId ? (
                       <DropdownMenuItem
@@ -1289,14 +1296,14 @@ function IssueChatAssistantMessage() {
                         }}
                       >
                         <Square className="mr-2 h-3.5 w-3.5 fill-current" />
-                        {stoppingRunId === runId ? "Stopping…" : "Stop run"}
+                        {stoppingRunId === runId ? t("issueChatThread.stopping") : t("issueChatThread.stop_run")}
                       </DropdownMenuItem>
                     ) : null}
                     {runHref ? (
                       <DropdownMenuItem asChild>
                         <Link to={runHref} target="_blank" rel="noreferrer noopener">
                           <Search className="mr-2 h-3.5 w-3.5" />
-                          View run
+                          {t("issueChatThread.view_run")}
                         </Link>
                       </DropdownMenuItem>
                     ) : null}
@@ -1322,6 +1329,7 @@ function IssueChatFeedbackButtons({
   termsUrl: string | null;
   onVote: (vote: FeedbackVoteValue, options?: { allowSharing?: boolean; reason?: string }) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
   const [optimisticVote, setOptimisticVote] = useState<FeedbackVoteValue | null>(null);
   const [reasonOpen, setReasonOpen] = useState(false);
@@ -1401,8 +1409,8 @@ function IssueChatFeedbackButtons({
             ? "text-green-600 dark:text-green-400"
             : "text-muted-foreground hover:bg-accent hover:text-foreground",
         )}
-        title="Helpful"
-        aria-label="Helpful"
+        title={t("issueChatThread.helpful")}
+        aria-label={t("issueChatThread.helpful")}
         onClick={handleThumbsUp}
       >
         <ThumbsUp className="h-3.5 w-3.5" />
@@ -1418,19 +1426,19 @@ function IssueChatFeedbackButtons({
                 ? "text-amber-600 dark:text-amber-400"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
-            title="Needs work"
-            aria-label="Needs work"
+            title={t("issueChatThread.needs_work")}
+            aria-label={t("issueChatThread.needs_work")}
             onClick={handleThumbsDown}
           >
             <ThumbsDown className="h-3.5 w-3.5" />
           </button>
         </PopoverTrigger>
         <PopoverContent side="top" align="start" className="w-80 p-3">
-          <div className="mb-2 text-sm font-medium">What could have been better?</div>
+          <div className="mb-2 text-sm font-medium">{t("issueChatThread.what_could_be_better")}</div>
           <Textarea
             value={downvoteReason}
             onChange={(event) => setDownvoteReason(event.target.value)}
-            placeholder="Add a short note"
+            placeholder={t("issueChatThread.add_short_note")}
             className="min-h-20 resize-y bg-background text-sm"
             disabled={isSaving}
           />
@@ -1445,7 +1453,7 @@ function IssueChatFeedbackButtons({
                 setDownvoteReason("");
               }}
             >
-              Dismiss
+              {t("issueChatThread.dismiss")}
             </Button>
             <Button
               type="button"
@@ -1453,7 +1461,7 @@ function IssueChatFeedbackButtons({
               disabled={isSaving || !downvoteReason.trim()}
               onClick={handleSubmitReason}
             >
-              {isSaving ? "Saving..." : "Save note"}
+              {isSaving ? t("issueChatThread.saving") : t("issueChatThread.save_note")}
             </Button>
           </div>
         </PopoverContent>
@@ -1470,21 +1478,21 @@ function IssueChatFeedbackButtons({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save your feedback sharing preference</DialogTitle>
+            <DialogTitle>{t("issueChatThread.save_feedback_sharing_title")}</DialogTitle>
             <DialogDescription>
-              Choose whether voted AI outputs can be shared with Paperclip Labs. This
-              answer becomes the default for future thumbs up and thumbs down votes.
+              {t("issueChatThread.save_feedback_sharing_description")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm text-muted-foreground">
-            <p>This vote is always saved locally.</p>
+            <p>{t("issueChatThread.vote_saved_locally")}</p>
             <p>
-              Choose <span className="font-medium text-foreground">Always allow</span> to share
-              this vote and future voted AI outputs. Choose{" "}
-              <span className="font-medium text-foreground">Don't allow</span> to keep this vote
-              and future votes local.
+              {t("issueChatThread.choose_always_allow")}{" "}
+              <span className="font-medium text-foreground">{t("issueChatThread.always_allow")}</span>{" "}
+              {t("issueChatThread.to_share_vote")}{" "}
+              <span className="font-medium text-foreground">{t("issueChatThread.dont_allow")}</span>{" "}
+              {t("issueChatThread.to_keep_votes_local")}
             </p>
-            <p>You can change this later in Instance Settings &gt; General.</p>
+            <p>{t("issueChatThread.change_later_in_settings")}</p>
             {termsUrl ? (
               <a
                 href={termsUrl}
@@ -1492,7 +1500,7 @@ function IssueChatFeedbackButtons({
                 rel="noreferrer"
                 className="inline-flex text-sm text-foreground underline underline-offset-4"
               >
-                Read our terms of service
+                {t("issueChatThread.read_terms_of_service")}
               </a>
             ) : null}
           </div>
@@ -1509,7 +1517,7 @@ function IssueChatFeedbackButtons({
                 ).then(() => setPendingSharingDialog(null));
               }}
             >
-              {isSaving ? "Saving..." : "Don't allow"}
+              {isSaving ? t("issueChatThread.saving") : t("issueChatThread.dont_allow")}
             </Button>
             <Button
               type="button"
@@ -1522,7 +1530,7 @@ function IssueChatFeedbackButtons({
                 }).then(() => setPendingSharingDialog(null));
               }}
             >
-              {isSaving ? "Saving..." : "Always allow"}
+              {isSaving ? t("issueChatThread.saving") : t("issueChatThread.always_allow")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1532,6 +1540,7 @@ function IssueChatFeedbackButtons({
 }
 
 function IssueChatSystemMessage() {
+  const { t } = useTranslation();
   const { agentMap, currentUserId, userLabelMap } = useContext(IssueChatCtx);
   const message = useMessage();
   const custom = message.metadata.custom as Record<string, unknown>;
@@ -1562,7 +1571,7 @@ function IssueChatSystemMessage() {
       <div className="min-w-0 space-y-1">
         <div className={cn("flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-xs", isCurrentUser && "justify-end")}>
           <span className="font-medium text-foreground">{actorName}</span>
-          <span className="text-muted-foreground">updated this task</span>
+          <span className="text-muted-foreground">{t("issueChatThread.updated_this_task")}</span>
           <a
             href={anchorId ? `#${anchorId}` : undefined}
             className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
@@ -1574,7 +1583,7 @@ function IssueChatSystemMessage() {
         {statusChange ? (
           <div className={cn("flex flex-wrap items-center gap-1.5 text-xs", isCurrentUser && "justify-end")}>
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Status
+              {t("issueChatThread.status")}
             </span>
             <span className="text-muted-foreground">{humanizeValue(statusChange.from)}</span>
             <ArrowRight className="h-3 w-3 text-muted-foreground" />
@@ -1585,7 +1594,7 @@ function IssueChatSystemMessage() {
         {assigneeChange ? (
           <div className={cn("flex flex-wrap items-center gap-1.5 text-xs", isCurrentUser && "justify-end")}>
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Assignee
+              {t("issueChatThread.assignee")}
             </span>
             <span className="text-muted-foreground">
               {formatTimelineAssigneeLabel(assigneeChange.from, agentMap, currentUserId, userLabelMap)}
@@ -1646,7 +1655,7 @@ function IssueChatSystemMessage() {
               <Link to={`/agents/${runAgentId}`} className="font-medium text-foreground transition-colors hover:underline">
                 {displayedRunAgentName}
               </Link>
-              <span className="text-muted-foreground">run</span>
+              <span className="text-muted-foreground">{t("issueChatThread.run")}</span>
               <Link
                 to={`/agents/${runAgentId}/runs/${runId}`}
                 className="inline-flex items-center rounded-md border border-border bg-accent/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
@@ -1685,6 +1694,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
   composerDisabledReason = null,
   issueStatus,
 }, forwardedRef) {
+  const { t } = useTranslation();
   const api = useAui();
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -1833,7 +1843,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
         ref={editorRef}
         value={body}
         onChange={setBody}
-        placeholder="Reply"
+        placeholder={t("issueChatThread.reply")}
         mentions={mentions}
         onSubmit={handleSubmit}
         imageUploadHandler={onImageUpload}
@@ -1856,7 +1866,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
               size="icon-sm"
               onClick={() => attachInputRef.current?.click()}
               disabled={attaching}
-              title="Attach image"
+              title={t("issueChatThread.attach_image")}
             >
               <Paperclip className="h-4 w-4" />
             </Button>
@@ -1867,14 +1877,14 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
           <InlineEntitySelector
             value={reassignTarget}
             options={reassignOptions}
-            placeholder="Assignee"
-            noneLabel="No assignee"
-            searchPlaceholder="Search assignees..."
-            emptyMessage="No assignees found."
+            placeholder={t("issueChatThread.chat_assignee")}
+            noneLabel={t("issueChatThread.chat_no_assignee")}
+            searchPlaceholder={t("issueChatThread.chat_search_assignees")}
+            emptyMessage={t("issueChatThread.chat_no_assignees_found")}
             onChange={setReassignTarget}
             className="h-8 text-xs"
             renderTriggerValue={(option) => {
-              if (!option) return <span className="text-muted-foreground">Assignee</span>;
+              if (!option) return <span className="text-muted-foreground">{t("issueChatThread.assignee")}</span>;
               const agentId = option.id.startsWith("agent:") ? option.id.slice("agent:".length) : null;
               const agent = agentId ? agentMap?.get(agentId) : null;
               return (
@@ -1903,7 +1913,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
         ) : null}
 
         <Button size="sm" disabled={!canSubmit} onClick={() => void handleSubmit()}>
-          {submitting ? "Posting..." : "Send"}
+          {submitting ? t("issueChatThread.posting") : t("issueChatThread.send")}
         </Button>
       </div>
     </div>
@@ -1954,6 +1964,7 @@ export function IssueChatThread({
   onImageClick,
   composerRef,
 }: IssueChatThreadProps) {
+  const { t } = useTranslation();
   const location = useLocation();
   const hasScrolledRef = useRef(false);
   const bottomAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -2143,8 +2154,8 @@ export function IssueChatThread({
   const resolvedShowJumpToLatest = showJumpToLatest ?? variant === "full";
   const resolvedEmptyMessage = emptyMessage
     ?? (variant === "embedded"
-      ? "No run output yet."
-      : "This issue conversation is empty. Start with a message below.");
+      ? t("issueChatThread.no_run_output_yet")
+      : t("issueChatThread.conversation_empty"));
   const errorBoundaryResetKey = useMemo(
     () => messages.map((message) => `${message.id}:${message.role}:${message.content.length}:${message.status?.type ?? "none"}`).join("|"),
     [messages],
@@ -2161,7 +2172,7 @@ export function IssueChatThread({
               onClick={handleJumpToLatest}
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
-              Jump to latest
+              {t("issueChatThread.jump_to_latest")}
             </button>
           </div>
         ) : null}
